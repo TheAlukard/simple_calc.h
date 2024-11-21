@@ -71,6 +71,8 @@ typedef struct {
     T(token_type) type;
 } T(token);
 
+#define TOKEN_LEN(token) ((int)((token).end - (token).begin + 1))
+
 list_define(token_list, token);
 
 typedef struct {
@@ -311,7 +313,7 @@ DEF(NUM_TYPE, expression, T(parser) *parser, T(precedence) prec)
     T(parse_rule) rule = CAL(get_rule, token);
 
     if (rule.prefix == NULL) {
-        fprintf(stderr, "ERROR: token '%.*s' shouldn't be here\n", (int)(token.end - token.begin + 1), token.begin);
+        fprintf(stderr, "ERROR: token '%.*s' shouldn't be here\n", TOKEN_LEN(token), token.begin);
         parser->error = true;
         return 0;
     }
@@ -335,7 +337,7 @@ DEF(NUM_TYPE, expression, T(parser) *parser, T(precedence) prec)
             case TOK(SLASH) : left = left / right; break;
             case TOK(CARRET): left = pow(left, right); break;
             default:
-                fprintf(stderr, "ERROR: Unknown token type: '%.*s'\n", (int)(token.end - token.begin + 1), token.begin);
+                fprintf(stderr, "ERROR: Unknown token type: '%.*s'\n", TOKEN_LEN(token), token.begin);
                 parser->error = true;
                 return 0;
         }
@@ -349,7 +351,7 @@ DEF(NUM_TYPE, num, T(parser) *parser)
     T(token) token = CAL(parser_prev, parser);
     char *endptr;
     static char temp[100];
-    sprintf(temp, "%.*s", (int)(token.end - token.begin + 1), token.begin);
+    sprintf(temp, "%.*s", TOKEN_LEN(token), token.begin);
 
     return strtod(temp, &endptr);
 }
@@ -380,7 +382,7 @@ DEF(NUM_TYPE, grouping, T(parser) *parser)
         if (parser->error) return 0;
 
         token = CAL(parser_prev, parser);
-        fprintf(stderr, "ERROR: expected ')' but got '%.*s'\n", (int)(token.end - token.begin + 1), token.begin); 
+        fprintf(stderr, "ERROR: expected ')' but got '%.*s'\n", TOKEN_LEN(token), token.begin); 
         parser->error = true;
         return 0;
     }
@@ -426,6 +428,7 @@ NUM_TYPE scalc_calculate(const char *text)
 #undef CAL
 #undef TOK
 #undef T
+#undef TOKEN_LEN
 #undef list_define
 #undef list_append
 #undef list_delete
