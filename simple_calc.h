@@ -428,6 +428,7 @@ NUM_TYPE scalc_calculate(const char *text)
 #undef T
 #undef list_define
 #undef list_append
+#undef list_delete
 #undef is_alpha
 #undef is_num
 #undef is_alnum
