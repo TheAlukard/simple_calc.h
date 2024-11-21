@@ -2,9 +2,6 @@
 #include "simple_calc.h"
 #include "stdio.h"
 
-static int success = 0;
-static int total = 0;
-
 #define EXPECTED(expr, expected)\
     do {\
         total += 1;\
@@ -30,6 +27,9 @@ static int total = 0;
 
 int main(void)
 {
+    int success = 0;
+    int total = 0;
+
     EXPECTED(
         "3 + 3",
         6
