@@ -20,10 +20,11 @@ NUM_TYPE scalc_calculate(const char *text);
 
 #ifdef SIMPLE_CALC_IMPLEMENTATION
 
-#define DEF(return_type, func_name, ...) return_type SIMPLE_CALCULATOR_##func_name(__VA_ARGS__)
-#define CAL(func_name, ...) SIMPLE_CALCULATOR_##func_name(__VA_ARGS__)
-#define TOK(name) SIMPLE_CALCULATOR_TOKEN_TYPE_##name
-#define T(name) SIMPLE_CALCULATOR_##name
+#define DEF(return_type, func_name, ...) return_type simple_calculator_##func_name(__VA_ARGS__)
+#define CAL(func_name, ...) simple_calculator_##func_name(__VA_ARGS__)
+#define TOK(name) simple_calculator_token_type_##name
+#define T(name) simple_calculator_##name
+#define UNUSED(item) (void)(item)
     
 #define list_define(name, type) \
     typedef struct {\
@@ -320,7 +321,7 @@ DEF(NUM_TYPE, expression, T(parser) *parser, T(precedence) prec)
 
     NUM_TYPE left = rule.prefix(parser);
 
-    while (prec < CAL(get_rule, CAL(parser_peek, parser)).lbp) {
+    while (parser->current < parser->tokens->count && (int)prec < CAL(get_rule, CAL(parser_peek, parser)).lbp) {
         if (parser->current >= parser->tokens->count) {
             return left;
         }
@@ -392,6 +393,7 @@ DEF(NUM_TYPE, grouping, T(parser) *parser)
 
 DEF(NUM_TYPE, identifier, T(parser) *parser)
 {
+    UNUSED(parser);
     return 0;
 }
 
@@ -428,6 +430,7 @@ NUM_TYPE scalc_calculate(const char *text)
 #undef CAL
 #undef TOK
 #undef T
+#undef UNUSED
 #undef TOKEN_LEN
 #undef list_define
 #undef list_append
