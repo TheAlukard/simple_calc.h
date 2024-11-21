@@ -22,7 +22,7 @@ NUM_TYPE scalc_calculate(const char *text);
 
 #define DEF(return_type, func_name, ...) return_type simple_calculator_##func_name(__VA_ARGS__)
 #define CAL(func_name, ...) simple_calculator_##func_name(__VA_ARGS__)
-#define TOK(name) simple_calculator_token_type_##name
+#define ENUM(name) simple_calculator_enum_type_##name
 #define T(name) simple_calculator_##name
 #define UNUSED(item) (void)(item)
     
@@ -52,18 +52,18 @@ NUM_TYPE scalc_calculate(const char *text);
     } while (0)
 
 typedef enum {
-    TOK(NUM),
-    TOK(PLUS),
-    TOK(HYPHEN),
-    TOK(STAR),
-    TOK(SLASH),
-    TOK(CARRET),
-    TOK(LPAREN),
-    TOK(RPAREN),
-    TOK(SYMBOL),
-    TOK(END),
-    TOK(ERROR),
-    TOK(COUNT),
+    ENUM(NUM),
+    ENUM(PLUS),
+    ENUM(HYPHEN),
+    ENUM(STAR),
+    ENUM(SLASH),
+    ENUM(CARRET),
+    ENUM(LPAREN),
+    ENUM(RPAREN),
+    ENUM(SYMBOL),
+    ENUM(END),
+    ENUM(ERROR),
+    ENUM(COUNT),
 } T(token_type);
 
 typedef struct {
@@ -125,7 +125,7 @@ DEF(T(token), tokenize_num, T(lexer) *lexer)
     }
 
     token.end = &lexer->text[lexer->current - 1];
-    token.type = TOK(NUM);
+    token.type = ENUM(NUM);
 
     return token;
 }
@@ -140,7 +140,7 @@ DEF(T(token), tokenize_symbol, T(lexer) *lexer)
     }
 
     token.end = &lexer->text[lexer->current - 1];
-    token.type = TOK(SYMBOL);
+    token.type = ENUM(SYMBOL);
 
     return token;
 }
@@ -153,34 +153,34 @@ DEF(T(token), tokenize_operator, T(lexer) *lexer)
     switch (CAL(lexer_peek, lexer)) {
         case '+':
             CAL(lexer_consume, lexer);
-            token.type = TOK(PLUS);
+            token.type = ENUM(PLUS);
             break;
         case '-':
             CAL(lexer_consume, lexer);
-            token.type = TOK(HYPHEN);
+            token.type = ENUM(HYPHEN);
             break;
         case '*':
             CAL(lexer_consume, lexer);
-            token.type = TOK(STAR);
+            token.type = ENUM(STAR);
             break;
         case '/':
             CAL(lexer_consume, lexer);
-            token.type = TOK(SLASH);
+            token.type = ENUM(SLASH);
             break;
         case '^':
             CAL(lexer_consume, lexer);
-            token.type = TOK(CARRET);
+            token.type = ENUM(CARRET);
             break;
         case '(':
             CAL(lexer_consume, lexer);
-            token.type = TOK(LPAREN);
+            token.type = ENUM(LPAREN);
             break;
         case ')':
             CAL(lexer_consume, lexer);
-            token.type = TOK(RPAREN);
+            token.type = ENUM(RPAREN);
             break;
         default:
-            token.type = TOK(ERROR);
+            token.type = ENUM(ERROR);
     }
 
     token.end = &lexer->text[lexer->current - 1];
@@ -205,7 +205,7 @@ DEF(T(token), lexer_next, T(lexer) *lexer)
         return (T(token)) {
             .begin = &lexer->text[lexer->current - 1],
             .end = &lexer->text[lexer->current - 1],
-            .type = TOK(END),
+            .type = ENUM(END),
         };
     }
     else if (is_num(c)) {
@@ -224,10 +224,10 @@ DEF(bool, tokenize, const char* text, T(token_list) *token_list)
     T(lexer) lexer = CAL(lexer_new, text);
     T(token) token = {0};
 
-    while ((token = CAL(lexer_next, &lexer)).type != TOK(END)) {
+    while ((token = CAL(lexer_next, &lexer)).type != ENUM(END)) {
         list_append(*token_list, token);
 
-        if (token.type == TOK(ERROR)) return false;
+        if (token.type == ENUM(ERROR)) return false;
     }
 
     return true;
@@ -266,11 +266,11 @@ DEF(T(token), parser_prev, T(parser) *parser)
 }
 
 typedef enum {
-    TOK(PREC_NONE),
-    TOK(PREC_ADDSUB),
-    TOK(PREC_MULDIV),
-    TOK(PREC_POW),
-    TOK(PREC_UNARY),
+    ENUM(PREC_NONE),
+    ENUM(PREC_ADDSUB),
+    ENUM(PREC_MULDIV),
+    ENUM(PREC_POW),
+    ENUM(PREC_UNARY),
 } T(precedence);
 
 typedef NUM_TYPE (*T(parse_fn))(T(parser)*);
@@ -287,18 +287,18 @@ DEF(NUM_TYPE, unary, T(parser) *parser);
 DEF(NUM_TYPE, grouping, T(parser) *parser);
 DEF(NUM_TYPE, identifier, T(parser) *parser);
 
-static const T(parse_rule) T(rules)[TOK(COUNT)] = {
-    {T(num), NULL, TOK(PREC_NONE)},
-    {NULL, T(binary), TOK(PREC_ADDSUB)},
-    {T(unary), T(binary), TOK(PREC_ADDSUB)},
-    {NULL, T(binary), TOK(PREC_MULDIV)},
-    {NULL, T(binary), TOK(PREC_MULDIV)},
-    {NULL, T(binary), TOK(PREC_POW)},
-    {T(grouping), NULL, TOK(PREC_NONE)},
-    {NULL, NULL, TOK(PREC_NONE)},
-    {T(identifier), NULL, TOK(PREC_NONE)},
-    {NULL, NULL, TOK(PREC_NONE)},
-    {NULL, NULL, TOK(PREC_NONE)},
+static const T(parse_rule) T(rules)[ENUM(COUNT)] = {
+    {T(num), NULL, ENUM(PREC_NONE)},
+    {NULL, T(binary), ENUM(PREC_ADDSUB)},
+    {T(unary), T(binary), ENUM(PREC_ADDSUB)},
+    {NULL, T(binary), ENUM(PREC_MULDIV)},
+    {NULL, T(binary), ENUM(PREC_MULDIV)},
+    {NULL, T(binary), ENUM(PREC_POW)},
+    {T(grouping), NULL, ENUM(PREC_NONE)},
+    {NULL, NULL, ENUM(PREC_NONE)},
+    {T(identifier), NULL, ENUM(PREC_NONE)},
+    {NULL, NULL, ENUM(PREC_NONE)},
+    {NULL, NULL, ENUM(PREC_NONE)},
 };
 
 DEF(T(parse_rule), get_rule, T(token) token)
@@ -332,11 +332,11 @@ DEF(NUM_TYPE, expression, T(parser) *parser, T(precedence) prec)
         NUM_TYPE right = rule.infix(parser);
 
         switch (token.type) {
-            case TOK(PLUS) :  left = left + right; break;
-            case TOK(HYPHEN): left = left - right; break;
-            case TOK(STAR)  : left = left * right; break;
-            case TOK(SLASH) : left = left / right; break;
-            case TOK(CARRET): left = pow(left, right); break;
+            case ENUM(PLUS) :  left = left + right; break;
+            case ENUM(HYPHEN): left = left - right; break;
+            case ENUM(STAR)  : left = left * right; break;
+            case ENUM(SLASH) : left = left / right; break;
+            case ENUM(CARRET): left = pow(left, right); break;
             default:
                 fprintf(stderr, "ERROR: Unknown token type: '%.*s'\n", TOKEN_LEN(token), token.begin);
                 parser->error = true;
@@ -379,7 +379,7 @@ DEF(NUM_TYPE, grouping, T(parser) *parser)
     T(parse_rule) rule = CAL(get_rule, token);
     NUM_TYPE num = CAL(expression, parser, (T(precedence))(rule.lbp));
 
-    if (CAL(parser_consume, parser).type != TOK(RPAREN)) {
+    if (CAL(parser_consume, parser).type != ENUM(RPAREN)) {
         if (parser->error) return 0;
 
         token = CAL(parser_prev, parser);
@@ -400,7 +400,7 @@ DEF(NUM_TYPE, identifier, T(parser) *parser)
 DEF(NUM_TYPE, parse, T(token_list) *token_list)
 {
     T(parser) parser = CAL(parser_new, token_list);
-    NUM_TYPE result = CAL(expression, &parser, TOK(PREC_NONE));
+    NUM_TYPE result = CAL(expression, &parser, ENUM(PREC_NONE));
 
     if (parser.error) {
         fprintf(stderr, "ERROR: Parsing failed at '%s'\n", token_list->items[parser.current].begin);
@@ -428,7 +428,7 @@ NUM_TYPE scalc_calculate(const char *text)
 
 #undef DEF
 #undef CAL
-#undef TOK
+#undef ENUM
 #undef T
 #undef UNUSED
 #undef TOKEN_LEN
