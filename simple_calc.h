@@ -20,7 +20,7 @@ NUM_TYPE scalc_calculate(const char *text);
 
 #ifdef SIMPLE_CALC_IMPLEMENTATION
 
-#define DEF(return_type, func_name, ...) return_type simple_calculator_##func_name(__VA_ARGS__)
+#define FUN(return_type, func_name, ...) return_type simple_calculator_##func_name(__VA_ARGS__)
 #define CAL(func_name, ...) simple_calculator_##func_name(__VA_ARGS__)
 #define ENUM(name) simple_calculator_enum_type_##name
 #define T(name) simple_calculator_##name
@@ -81,7 +81,7 @@ typedef struct {
     size_t current;
 } T(lexer);
 
-DEF(T(lexer), lexer_new, const char *text) 
+FUN(T(lexer), lexer_new, const char *text) 
 {
     return (T(lexer)) {
         .text = text,
@@ -98,17 +98,17 @@ DEF(T(lexer), lexer_new, const char *text)
 #define is_alnum(c) (is_alpha(c) || is_num(c))
 #define is_space(c) (c == ' ' || c == '\r' || c == '\t' || c == '\n')
 
-DEF(char, lexer_peek, T(lexer) *lexer)
+FUN(char, lexer_peek, T(lexer) *lexer)
 {
     return lexer->text[lexer->current];
 }
 
-DEF(char, lexer_consume, T(lexer) *lexer) 
+FUN(char, lexer_consume, T(lexer) *lexer) 
 {
     return lexer->text[lexer->current++];
 }
 
-DEF(T(token), tokenize_num, T(lexer) *lexer)
+FUN(T(token), tokenize_num, T(lexer) *lexer)
 {
     T(token) token = {0};
     token.begin = &lexer->text[lexer->current];
@@ -130,7 +130,7 @@ DEF(T(token), tokenize_num, T(lexer) *lexer)
     return token;
 }
 
-DEF(T(token), tokenize_symbol, T(lexer) *lexer)
+FUN(T(token), tokenize_symbol, T(lexer) *lexer)
 {
     T(token) token = {0};
     token.begin = &lexer->text[lexer->current];
@@ -145,7 +145,7 @@ DEF(T(token), tokenize_symbol, T(lexer) *lexer)
     return token;
 }
 
-DEF(T(token), tokenize_operator, T(lexer) *lexer)
+FUN(T(token), tokenize_operator, T(lexer) *lexer)
 {
     T(token) token = {0};
     token.begin = &lexer->text[lexer->current];
@@ -188,14 +188,14 @@ DEF(T(token), tokenize_operator, T(lexer) *lexer)
     return token;
 }
 
-DEF(void, trim_left, T(lexer) *lexer)
+FUN(void, trim_left, T(lexer) *lexer)
 {
     while (is_space(CAL(lexer_peek, lexer))) {
         CAL(lexer_consume, lexer);
     }
 }
 
-DEF(T(token), lexer_next, T(lexer) *lexer)
+FUN(T(token), lexer_next, T(lexer) *lexer)
 {
     CAL(trim_left, lexer);
     char c = CAL(lexer_peek, lexer);
@@ -219,7 +219,7 @@ DEF(T(token), lexer_next, T(lexer) *lexer)
     }
 }
 
-DEF(bool, tokenize, const char* text, T(token_list) *token_list) 
+FUN(bool, tokenize, const char* text, T(token_list) *token_list) 
 {
     T(lexer) lexer = CAL(lexer_new, text);
     T(token) token = {0};
@@ -240,7 +240,7 @@ typedef struct {
     bool error;
 } T(parser);
 
-DEF(T(parser), parser_new, T(token_list) *token_list)
+FUN(T(parser), parser_new, T(token_list) *token_list)
 {
     return (T(parser)) {
         .tokens = token_list,
@@ -250,17 +250,17 @@ DEF(T(parser), parser_new, T(token_list) *token_list)
     };
 }
 
-DEF(T(token), parser_consume, T(parser) *parser)
+FUN(T(token), parser_consume, T(parser) *parser)
 {
     return parser->tokens->items[parser->current++];
 }
 
-DEF(T(token), parser_peek, T(parser) *parser)
+FUN(T(token), parser_peek, T(parser) *parser)
 {
     return parser->tokens->items[parser->current];
 }
 
-DEF(T(token), parser_prev, T(parser) *parser)
+FUN(T(token), parser_prev, T(parser) *parser)
 {
     return parser->tokens->items[parser->current - 1];
 }
@@ -281,11 +281,11 @@ typedef struct {
     int lbp;
 } T(parse_rule);
 
-DEF(NUM_TYPE, num, T(parser) *parser);
-DEF(NUM_TYPE, binary, T(parser) *parser);
-DEF(NUM_TYPE, unary, T(parser) *parser);
-DEF(NUM_TYPE, grouping, T(parser) *parser);
-DEF(NUM_TYPE, identifier, T(parser) *parser);
+FUN(NUM_TYPE, num, T(parser) *parser);
+FUN(NUM_TYPE, binary, T(parser) *parser);
+FUN(NUM_TYPE, unary, T(parser) *parser);
+FUN(NUM_TYPE, grouping, T(parser) *parser);
+FUN(NUM_TYPE, identifier, T(parser) *parser);
 
 static const T(parse_rule) T(rules)[ENUM(COUNT)] = {
     {T(num), NULL, ENUM(PREC_NONE)},
@@ -301,12 +301,12 @@ static const T(parse_rule) T(rules)[ENUM(COUNT)] = {
     {NULL, NULL, ENUM(PREC_NONE)},
 };
 
-DEF(T(parse_rule), get_rule, T(token) token)
+FUN(T(parse_rule), get_rule, T(token) token)
 {
     return T(rules)[token.type];
 }
 
-DEF(NUM_TYPE, expression, T(parser) *parser, T(precedence) prec)
+FUN(NUM_TYPE, expression, T(parser) *parser, T(precedence) prec)
 {
     if (parser->error) return 0;
 
@@ -347,7 +347,7 @@ DEF(NUM_TYPE, expression, T(parser) *parser, T(precedence) prec)
     return left;
 }
 
-DEF(NUM_TYPE, num, T(parser) *parser)
+FUN(NUM_TYPE, num, T(parser) *parser)
 {
     T(token) token = CAL(parser_prev, parser);
     char *endptr;
@@ -357,7 +357,7 @@ DEF(NUM_TYPE, num, T(parser) *parser)
     return strtod(temp, &endptr);
 }
 
-DEF(NUM_TYPE, binary, T(parser) *parser)
+FUN(NUM_TYPE, binary, T(parser) *parser)
 {
     T(token) token = CAL(parser_prev, parser);
     T(parse_rule) rule = CAL(get_rule, token);
@@ -365,7 +365,7 @@ DEF(NUM_TYPE, binary, T(parser) *parser)
     return CAL(expression, parser, (T(precedence))(rule.lbp));
 }
 
-DEF(NUM_TYPE, unary, T(parser) *parser)
+FUN(NUM_TYPE, unary, T(parser) *parser)
 {
     T(token) token = CAL(parser_prev, parser);
     T(parse_rule) rule = CAL(get_rule, token);
@@ -373,7 +373,7 @@ DEF(NUM_TYPE, unary, T(parser) *parser)
     return -CAL(expression, parser, (T(precedence))(rule.lbp));
 }
 
-DEF(NUM_TYPE, grouping, T(parser) *parser)
+FUN(NUM_TYPE, grouping, T(parser) *parser)
 {
     T(token) token = CAL(parser_prev, parser);
     T(parse_rule) rule = CAL(get_rule, token);
@@ -391,13 +391,13 @@ DEF(NUM_TYPE, grouping, T(parser) *parser)
     return num;
 }
 
-DEF(NUM_TYPE, identifier, T(parser) *parser)
+FUN(NUM_TYPE, identifier, T(parser) *parser)
 {
     UNUSED(parser);
     return 0;
 }
 
-DEF(NUM_TYPE, parse, T(token_list) *token_list)
+FUN(NUM_TYPE, parse, T(token_list) *token_list)
 {
     T(parser) parser = CAL(parser_new, token_list);
     NUM_TYPE result = CAL(expression, &parser, ENUM(PREC_NONE));
@@ -426,7 +426,7 @@ NUM_TYPE scalc_calculate(const char *text)
     return result;
 }
 
-#undef DEF
+#undef FUN
 #undef CAL
 #undef ENUM
 #undef T
