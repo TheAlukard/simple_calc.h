@@ -110,7 +110,7 @@ bool get_test_cases(TestCase* *output, size_t *count)
 
         (*output)[i].answer = strtod(temp, &endptr);
 
-        if (i < (*count) - 1 && (c == '\0' || c != '\n')) FAILED();
+        if (i < (*count) - 1 && c != '\n') FAILED();
     }
 
 CLEANUP:
