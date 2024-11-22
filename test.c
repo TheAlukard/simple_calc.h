@@ -1,10 +1,10 @@
 #define SIMPLE_CALC_IMPLEMENTATION
 #include "simple_calc.h"
 #include "stdio.h"
+#include <stdlib.h>
 
 #define EXPECTED(expr, expected)\
     do {\
-        total += 1;\
         double eps = 1e-5;\
         double result = sc_calculate(expr);\
         bool equal;\
@@ -23,539 +23,131 @@
         printf("  output : %lf\n", result);\
         printf("  status : %s\n", equal ? "SUCCESS" : "FAILURE");\
         printf("}\n");\
+        if (!equal) return 0;\
     } while (0)
+
+typedef struct {
+    char *input;
+    double answer;
+} TestCase;
+
+bool get_test_cases(TestCase* *output, size_t *count)
+{
+    FILE *f = fopen("test_cases.txt", "rb");
+
+    if (f == NULL) return false;
+
+
+    size_t digits = 0;
+
+    bool failed = false;
+    char buffer[100];
+    char c;
+    char *endptr;
+
+    #define FAILED() \
+        do {\
+            failed = true;\
+            goto CLEANUP;\
+        } while (0)
+
+    *output = NULL;
+
+    c = fgetc(f);
+
+    while (c != '\0' && c != '\n') {
+        if (digits >= 100) FAILED();
+        buffer[digits++] = c;
+        c = fgetc(f);
+    }
+    if (digits >= 100) FAILED();
+    buffer[digits] = '\0';
+
+    if (c == '\0' || c != '\n' || digits <= 0) FAILED();
+
+    *count = strtoull(buffer, &endptr, 0);
+
+    if (*count <= 0 || *count > 10000) {
+        *count = 0;
+        FAILED();
+    }
+
+    *output = calloc(*count, sizeof(TestCase));
+
+    if (*output == NULL) FAILED();
+
+    for (size_t i = 0; i < *count; i++) {
+        c = fgetc(f);
+        if (c != '"') FAILED();
+        const size_t max_len = 1024;
+        (*output)[i].input = malloc(sizeof(char) * max_len);
+        if ((*output)[i].input == NULL) FAILED();
+        size_t len = 0;
+        c = fgetc(f);
+        while (c != '\0' && c != '"') {
+            if (len >= max_len) FAILED();
+            (*output)[i].input[len++] = c;
+            c = fgetc(f);
+        }
+        if (len >= max_len) FAILED();
+        (*output)[i].input[len] = '\0';
+        if (c != '"') FAILED();
+        
+        const size_t temp_len = 100;
+        char temp[temp_len];
+        len = 0;
+
+        c = fgetc(f);
+        while (c != '\0' && c != '\n') {
+            if (len >= temp_len) FAILED();
+            temp[len++] = c;
+            c = fgetc(f);
+        }
+        if (len >= temp_len) FAILED();
+        temp[len] = '\0';
+
+        (*output)[i].answer = strtod(temp, &endptr);
+
+        if (i < (*count) - 1 && (c == '\0' || c != '\n')) FAILED();
+    }
+
+CLEANUP:
+    #undef FAILED
+    fclose(f);
+
+    if (failed) {
+        if (*output != NULL) {
+            for (size_t i = 0; i < *count; i++) {
+                free((*output)[i].input);
+            }
+        }
+        free(*output);
+        *output = NULL;
+        *count = 0;
+
+        return false;
+    }
+
+    return true;
+}
 
 int main(void)
 {
-    int success = 0;
-    int total = 0;
+    size_t success = 0;
 
-    EXPECTED(
-        "3 + 3",
-        6
-    );
-    EXPECTED(
-        "3 - 3",
-        0
-    );
-    EXPECTED(
-        "3 * 3",
-        9
-    );
-    EXPECTED(
-        "3 / 3",
-        1
-    );
-    EXPECTED(
-        "3 ^ 3",
-        27
-    );
-    EXPECTED(
-        "5 - -3",
-        8
-    );
-    EXPECTED(
-        "5 + -(2 * 3)",
-        -1
-    );
-    EXPECTED(
-        "5 * -1",
-        -5
-    );
-    EXPECTED(
-        "5 * 2 ^ 3 / 4 + 1 * 5",
-        15
-    );
-    EXPECTED(
-        "5 * 2 ^ 3 ^ 4 + 1 +  79",
-        20560
-    );
-    EXPECTED(
-        "1+2*3",
-        7
-    );
-    EXPECTED(
-        "1+3*9",
-        28
-    );
-    EXPECTED(
-        "64 ^ 0 / 2 + 6",
-        6.5f
-    );
-    EXPECTED(
-        "4 ^ 2 / 8 + 1",
-        3
-    );
-    EXPECTED(
-        "1 / 0.5 + 6",
-        8
-    );
-    EXPECTED(
-        "3 + 5 / 3 ^ 4 * 9 - 2 * 1",
-        1.55555555555556
-    );
-    EXPECTED(
-        "3 + 3 + 3 + 3 + 3 ^ 0 + 3",
-        16
-    );
-    EXPECTED(
-        "1 / 0.3 - 0.1 * 3 ^ 2",
-        2.43333333333333
-    );
-    EXPECTED(
-        "0 / 2 * 1",
-        0
-    );
-    EXPECTED(
-        "0/1*2",
-        0
-    );
-    EXPECTED(
-        "2 ^ 3 + 2",
-        10
-    );
-    EXPECTED(
-        "2 ^ (3 + 2)",
-        32
-    );
-    EXPECTED(
-        "9 / 3 - 2",
-        1
-    );
-    EXPECTED(
-        "9 / (3 - 2)",
-        9
-    );
-    EXPECTED(
-        "9 + 2 ^ 2 + 9 * 3 - 1 - 1",
-        9 + pow(2, 2) + 9 * 3 - 1 - 1
-    );
-    EXPECTED(
-        "9 + 2 ^ (2 + 9 * 3 - 1 - 1)",
-        9 + pow(2, 2 + 9 * 3 - 1 - 1)
-    );
-    EXPECTED(
-        "9 + 2 ^ (2 + 9 * (3 - 1) - 1)",
-        9 + pow(2, 2 + 9 * (3 - 1) - 1)
-    );
-    EXPECTED(
-        "0 / (3 - 1) + 9 * (2 ^ (1+1) + 3 * (3 * (1 - 1 + (3 / 1))))",
-        0.f / (3 - 1) + 9 * (pow(2, 1 + 1) + 3 * (3 * (1 - 1 + (3.f / 1))))
-    );
-    EXPECTED(
-        "10 + 5",
-        15
-    );
-    EXPECTED(
-        "10 - 5",
-        5
-    );
-    EXPECTED(
-        "10 * 5",
-        50
-    );
-    EXPECTED(
-        "10 / 2",
-        5
-    );
-    EXPECTED(
-        "10 ^ 2",
-        100
-    );
-    EXPECTED(
-        "20 - -10",
-        30
-    );
-    EXPECTED(
-        "4 + -(3 * 2)",
-        -2
-    );
-    EXPECTED(
-        "7 * -2",
-        -14
-    );
-    EXPECTED(
-        "2 * 3 ^ 2 + 4",
-        22
-    );
-    EXPECTED(
-        "8 / 2 + 3 ^ 2",
-        13
-    );
-    EXPECTED(
-        "(2 + 3) * 4",
-        20
-    );
-    EXPECTED(
-        "5 + 2 * (3 + 4)",
-        19
-    );
-    EXPECTED(
-        "10 / (2 + 3)",
-        2
-    );
-    EXPECTED(
-        "3 ^ 3 - 2 * 4",
-        19
-    );
-    EXPECTED(
-        "9 / 3 + 7",
-        10
-    );
-    EXPECTED(
-        "(4 ^ 2) / (8 / 2)",
-        4
-    );
-    EXPECTED(
-        "(2 + 3) ^ 2",
-        25
-    );
-    EXPECTED(
-        "6 * (1 + 2)",
-        18
-    );
-    EXPECTED(
-        "10 + 5 * 0",
-        10
-    );
-    EXPECTED(
-        "0 ^ 5",
-        0
-    );
-    EXPECTED(
-        "5 ^ 0",
-        1
-    );
-    EXPECTED(
-        "(2 + 3) * (4 - 1)",
-        15
-    );
-    EXPECTED(
-        "5 * 2 ^ (1 + 1)",
-        20
-    );
-    EXPECTED(
-        "6 - 4 / 2",
-        4
-    );
-    EXPECTED(
-        "9 + 3 ^ 2",
-        18
-    );
-    EXPECTED(
-        "8 / 4 * 2",
-        4
-    );
-    EXPECTED(
-        "7 - 2 + 3",
-        8
-    );
-    EXPECTED(
-        "2 * (3 + 4) - 5",
-        9
-    );
-    EXPECTED(
-        "3 + 5 * 2 - 4",
-        9
-    );
-    EXPECTED(
-        "10 / (2 ^ 2)",
-        2.5f
-    );
-    EXPECTED(
-        "10 / 4 * 2",
-        5
-    );
-    EXPECTED(
-        "5 + 3 - 2 * 4",
-        0
-    );
-    EXPECTED(
-        "2 ^ 3 ^ 2",
-        64
-    );
-    EXPECTED(
-        "6 / 3 + 2 * 5",
-        12
-    );
-    EXPECTED(
-        "3 * 3 ^ 2",
-        27
-    );
-    EXPECTED(
-        "(3 + 2) * (4 - 1)",
-        15
-    );
-    EXPECTED(
-        "2 ^ (3 - 1) * 3",
-        12
-    );
-    EXPECTED(
-        "10 - 5 + 3",
-        8
-    );
-    EXPECTED(
-        "(5 + 3) * (2 - 1)",
-        8
-    );
-    EXPECTED(
-        "(8 - 4) * (2 + 3)",
-        20
-    );
-    EXPECTED(
-        "3 + 3 * 3 - 3",
-        9
-    );
-    EXPECTED(
-        "5 * 5 - 3 ^ 2",
-        16
-    );
-    EXPECTED(
-        "4 ^ 2 - 2 * 3",
-        10
-    );
-    EXPECTED(
-        "6 / (3 - 1)",
-        3
-    );
-    EXPECTED(
-        "10 / 2 + 3",
-        8
-    );
-    EXPECTED(
-        "9 / (3 + 3)",
-        1.5f
-    );
-    EXPECTED(
-        "25 / 5 * 2",
-        10
-    );
-    EXPECTED(
-        "10 + 2 * (3 + 4)",
-        24
-    );
-    EXPECTED(
-        "7 * (2 + 3) - 4",
-        31
-    );
-    EXPECTED(
-        "(4 ^ 2) / (2 + 2)",
-        4
-    );
-    EXPECTED(
-        "1 / 2",
-        0.5f
-    );
-    EXPECTED(
-        "3 / 4",
-        0.75f
-    );
-    EXPECTED(
-        "1 / 3 + 2 / 3",
-        1.0f
-    );
-    EXPECTED(
-        "2 / 5 + 3 / 10",
-        0.7f
-    );
-    EXPECTED(
-        "5 / 2 - 1 / 2",
-        2.0f
-    );
-    EXPECTED(
-        "1 / 4 + 1 / 4",
-        0.5f
-    );
-    EXPECTED(
-        "1 / 3 * 3",
-        1.0f
-    );
-    EXPECTED(
-        "2 / 5 * 5 / 2",
-        1.0f
-    );
-    EXPECTED(
-        "3 / 4 / 2",
-        0.375f
-    );
-    EXPECTED(
-        "1 / 2 + 3 / 4 - 1 / 4",
-        1.0f
-    );
-    EXPECTED(
-        "3 / 4 * 4 / 3",
-        1.0f
-    );
-    EXPECTED(
-        "2 / 3 ^ 2",
-        2.0f / 9.0f
-    );
-    EXPECTED(
-        "4 / 5 + 1 / 5",
-        1.0f
-    );
-    EXPECTED(
-        "5 / 6 - 1 / 3",
-        0.5f
-    );
-    EXPECTED(
-        "1 / 3 + 1 / 6",
-        0.5f
-    );
-    EXPECTED(
-        "3 / 8 + 5 / 8",
-        1.0f
-    );
-    EXPECTED(
-        "7 / 10 - 1 / 2",
-        0.2f
-    );
-    EXPECTED(
-        "9 / 10 * 2 / 3",
-        0.6f
-    );
-    EXPECTED(
-        "2 / 5 + 3 / 5",
-        1.0f
-    );
-    EXPECTED(
-        "(1 / 3) + (1 / 3) + (1 / 3)",
-        1.0f
-    );
-    EXPECTED(
-        "(1 / 2) * (3 / 4)",
-        0.375f
-    );
-    EXPECTED(
-        "(3 / 5) / (6 / 5)",
-        0.5f
-    );
-    EXPECTED(
-        "1 / 2 ^ 2",
-        0.25f
-    );
-    EXPECTED(
-        "9 / (3 ^ 2)",
-        1.0f
-    );
-    EXPECTED(
-        "1 / (2 + 3)",
-        0.2f
-    );
-    EXPECTED(
-        "(1 / 2) + (2 / 3) * (3 / 4)",
-        1.0f
-    );
-    EXPECTED(
-        "(4 / 5) * (3 / 4)",
-        0.6f
-    );
-    EXPECTED(
-        "1 / (5 / 2)",
-        0.4f
-    );
-    EXPECTED(
-        "1 / 2 + 1 / 4 + 1 / 4",
-        1.0f
-    );
-    EXPECTED(
-        "(1 / 2) - (1 / 4)",
-        0.25f
-    );
-    EXPECTED(
-        "(2 / 3) * (3 / 2)",
-        1.0f
-    );
-    EXPECTED(
-        "(5 / 6) + (1 / 6)",
-        1.0f
-    );
-    EXPECTED(
-        "1 / 3 * (3 / 4)",
-        0.25f
-    );
-    EXPECTED(
-        "3 / 4 + (1 / 4) * (2 / 2)",
-        1.0f
-    );
-    EXPECTED(
-        "1 / (1 / 2)",
-        2.0f
-    );
-    EXPECTED(
-        "(1 / 3) + (1 / 3)",
-        2.0f / 3.0f
-    );
-    EXPECTED(
-        "1 / 3 + (1 / 6)",
-        0.5f
-    );
-    EXPECTED(
-        "3 / 4 - 1 / 2",
-        0.25f
-    );
-    EXPECTED(
-        "4 / (2 * 2)",
-        1.f
-    );
-    EXPECTED(
-        "2 / 3 * 3 / 2 ^ 2",
-        0.5f
-    );
-    EXPECTED(
-        "4 / 5 ^ 2",
-        0.16f
-    );
-    EXPECTED(
-        "5 / (2 + 3)",
-        1.0f
-    );
-    EXPECTED(
-        "1 / (4 / 5)",
-        1.25f
-    );
-    EXPECTED(
-        "(3 / 4) * (4 / 3)",
-        1.0f
-    );
-    EXPECTED(
-        "(2 / 3) + (1 / 3)",
-        1.0f
-    );
-    EXPECTED(
-        "(2 / 5) * (5 / 2)",
-        1.0f
-    );
-    EXPECTED(
-        "(4 / 5) / (1 / 5)",
-        4.0f
-    );
-    EXPECTED(
-        "1 / (2 + 3)",
-        0.2f
-    );
-    EXPECTED(
-        "(1 / 4) * (2 / 3)",
-        0.16666666666666666f
-    );
-    EXPECTED(
-        "(5 / 6) / (2 / 3)",
-        1.25f
-    );
-    EXPECTED(
-        "(3 / 8) + (5 / 8)",
-        1.0f
-    );
-    EXPECTED(
-        "4 / (2 ^ 2)",
-        1.0f
-    );
-    EXPECTED(
-        "3 + -2 / 1",
-        1
-    );
+    TestCase *cases;
+    size_t total;
 
-    printf("%d out of %d tests succeeded\n", success, total);
+    if (!get_test_cases(&cases, &total)) {
+        fprintf(stderr, "Failed to get test cases\n");
+        return 1;
+    }
+
+    for (size_t i = 0; i < total; i++) {
+        EXPECTED(cases[i].input, cases[i].answer);
+    }
+
+    printf("%zu out of %zu tests succeeded\n", success, total);
 
     return 0;
 }
