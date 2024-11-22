@@ -37,11 +37,10 @@ bool get_test_cases(TestCase* *output, size_t *count)
 
     if (f == NULL) return false;
 
-
-    size_t digits = 0;
-
     bool failed = false;
-    char buffer[100];
+    const size_t max_len = 1024;
+    size_t digits = 0;
+    char temp[max_len];
     char c;
     char *endptr;
 
@@ -56,16 +55,17 @@ bool get_test_cases(TestCase* *output, size_t *count)
     c = fgetc(f);
 
     while (c != '\0' && c != '\n') {
-        if (digits >= 100) FAILED();
-        buffer[digits++] = c;
+        if (digits >= max_len) FAILED();
+        temp[digits++] = c;
         c = fgetc(f);
     }
-    if (digits >= 100) FAILED();
-    buffer[digits] = '\0';
+    if (digits >= max_len) FAILED();
+
+    temp[digits] = '\0';
 
     if (c == '\0' || c != '\n' || digits <= 0) FAILED();
 
-    *count = strtoull(buffer, &endptr, 0);
+    *count = strtoull(temp, &endptr, 0);
 
     if (*count <= 0 || *count > 10000) {
         *count = 0;
@@ -79,31 +79,33 @@ bool get_test_cases(TestCase* *output, size_t *count)
     for (size_t i = 0; i < *count; i++) {
         c = fgetc(f);
         if (c != '"') FAILED();
-        const size_t max_len = 1024;
-        (*output)[i].input = malloc(sizeof(char) * max_len);
-        if ((*output)[i].input == NULL) FAILED();
         size_t len = 0;
         c = fgetc(f);
         while (c != '\0' && c != '"') {
             if (len >= max_len) FAILED();
-            (*output)[i].input[len++] = c;
-            c = fgetc(f);
-        }
-        if (len >= max_len) FAILED();
-        (*output)[i].input[len] = '\0';
-        if (c != '"') FAILED();
-        
-        const size_t temp_len = 100;
-        char temp[temp_len];
-        len = 0;
-
-        c = fgetc(f);
-        while (c != '\0' && c != '\n') {
-            if (len >= temp_len) FAILED();
             temp[len++] = c;
             c = fgetc(f);
         }
-        if (len >= temp_len) FAILED();
+        if (c != '"') FAILED();
+
+        (*output)[i].input = malloc(sizeof(char) * (len + 1));
+
+        if ((*output)[i].input == NULL) FAILED();
+
+        memcpy((*output)[i].input, temp, sizeof(char) * len);
+        (*output)[i].input[len] = '\0';
+
+        len = 0;
+        c = fgetc(f);
+
+        while (c != '\0' && c != '\n') {
+            if (len >= max_len) FAILED();
+            temp[len++] = c;
+            c = fgetc(f);
+        }
+
+        if (len >= max_len || len <= 0) FAILED();
+
         temp[len] = '\0';
 
         (*output)[i].answer = strtod(temp, &endptr);
