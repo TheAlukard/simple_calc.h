@@ -550,6 +550,10 @@ int main(void)
         "4 / (2 ^ 2)",
         1.0f
     );
+    EXPECTED(
+        "3 + -2 / 1",
+        1
+    );
 
     printf("%d out of %d tests succeeded\n", success, total);
 
