@@ -14,7 +14,7 @@
     #define NUM_TYPE double
 #endif // NUM_TYPE
 
-NUM_TYPE scalc_calculate(const char *text);
+NUM_TYPE sc_calculate(const char *text);
 
 #endif // SIMPLE_CALCULATOR_H_
 
@@ -410,7 +410,7 @@ FUN(NUM_TYPE, parse, T(token_list) *token_list)
     return result;
 }
 
-NUM_TYPE scalc_calculate(const char *text)
+NUM_TYPE sc_calculate(const char *text)
 {
     if (text == NULL) return 0;
 

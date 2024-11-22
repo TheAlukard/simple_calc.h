@@ -6,7 +6,7 @@
     do {\
         total += 1;\
         double eps = 1e-5;\
-        double result = scalc_calculate(expr);\
+        double result = sc_calculate(expr);\
         bool equal;\
         double diff = expected - result;\
         if (diff < 0) diff *= -1;\
