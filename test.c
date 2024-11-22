@@ -6,7 +6,7 @@
 #define EXPECTED(expr, expected)\
     do {\
         double eps = 1e-5;\
-        double result = sc_calculate(expr);\
+        double result = sc_calculate(expr, -1);\
         bool equal;\
         double diff = expected - result;\
         if (diff < 0) diff *= -1;\
