@@ -230,6 +230,8 @@ FUN(bool, tokenize, const char* text, T(token_list) *token_list)
         if (token.type == ENUM(ERROR)) return false;
     }
 
+    list_append(*token_list, token);
+
     return true;
 }
 
@@ -311,6 +313,13 @@ FUN(NUM_TYPE, expression, T(parser) *parser, T(precedence) prec)
     if (parser->error) return 0;
 
     T(token) token = CAL(parser_consume, parser);
+
+    if (token.type == ENUM(END)) {
+        fprintf(stderr, "ERROR: Expression isn't complete\n");
+        parser->error = true;
+        return 0;
+    }
+
     T(parse_rule) rule = CAL(get_rule, token);
 
     if (rule.prefix == NULL) {
@@ -399,6 +408,8 @@ FUN(NUM_TYPE, identifier, T(parser) *parser)
 
 FUN(NUM_TYPE, parse, T(token_list) *token_list)
 {
+    if (token_list->count <= 1) return 0;
+
     T(parser) parser = CAL(parser_new, token_list);
     NUM_TYPE result = CAL(expression, &parser, ENUM(PREC_NONE));
 
