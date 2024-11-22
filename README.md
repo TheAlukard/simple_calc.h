@@ -6,8 +6,8 @@
 
 int main(void)
 {
-	double six = sc_calculate("3 + 3");
-	double one = sc_calculate("3 + -2/1");
+	double six = sc_calculate("3 + 3", -1); // -1 for null terminated strings
+	double one = sc_calculate("3 + -2/1", 8); // >0 for sized strings
 	return 0;
 }
 ```
