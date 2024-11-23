@@ -337,13 +337,16 @@ FUN(NUM_TYPE, expression, T(parser) *parser, T(precedence) prec)
     NUM_TYPE left = rule.prefix(parser);
 
     while (parser->current < parser->tokens->count && (int)prec < CAL(get_rule, CAL(parser_peek, parser)).lbp) {
-        if (parser->current >= parser->tokens->count) {
-            return left;
-        }
-
         token = CAL(parser_consume, parser);
 
         rule = CAL(get_rule, token);
+
+        if (rule.infix == NULL) {
+            fprintf(stderr, "ERROR: token '%.*s' shouldn't be here\n", TOKEN_LEN(token), token.begin);
+            parser->error = true;
+            return 0;
+        }
+
         NUM_TYPE right = rule.infix(parser);
 
         switch (token.type) {
@@ -366,7 +369,7 @@ FUN(NUM_TYPE, num, T(parser) *parser)
 {
     T(token) token = CAL(parser_prev, parser);
     char *endptr;
-    static char temp[100];
+    char temp[TOKEN_LEN(token) + 1];
     sprintf(temp, "%.*s", TOKEN_LEN(token), token.begin);
 
     return strtod(temp, &endptr);
@@ -396,9 +399,16 @@ FUN(NUM_TYPE, grouping, T(parser) *parser)
 
     if (CAL(parser_consume, parser).type != ENUM(RPAREN)) {
         if (parser->error) return 0;
-
+    
         token = CAL(parser_prev, parser);
-        fprintf(stderr, "ERROR: expected ')' but got '%.*s'\n", TOKEN_LEN(token), token.begin); 
+    
+        if (token.type == ENUM(END) {
+            fprintf(stderr, "ERROR: Expresssion isn't complete\n"); 
+        }
+        else {
+            fprintf(stderr, "ERROR: expected ')' but got '%.*s'\n", TOKEN_LEN(token), token.begin); 
+        }
+
         parser->error = true;
         return 0;
     }
@@ -420,7 +430,13 @@ FUN(NUM_TYPE, parse, T(token_list) *token_list)
     NUM_TYPE result = CAL(expression, &parser, ENUM(PREC_NONE));
 
     if (parser.error) {
-        fprintf(stderr, "ERROR: Parsing failed at '%s'\n", token_list->items[parser.current].begin);
+        T(token) token = CAL(parser_prev, &parser);
+        if (token.type == ENUM(END)) {
+            fprintf(stderr, "ERROR: Parsing failed\n");
+        }
+        else {
+            fprintf(stderr, "ERROR: Parsing failed at '%.*s'\n", TOKEN_LEN(token), token.begin);
+        }
         return 0;
     }
 

@@ -63,7 +63,7 @@ bool get_test_cases(TestCase* *output, size_t *count)
 
     temp[digits] = '\0';
 
-    if (c == '\0' || c != '\n' || digits <= 0) FAILED();
+    if (c != '\n' || digits <= 0) FAILED();
 
     *count = strtoull(temp, &endptr, 0);
 
