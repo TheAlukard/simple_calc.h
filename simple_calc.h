@@ -402,7 +402,7 @@ FUN(NUM_TYPE, grouping, T(parser) *parser)
     
         token = CAL(parser_prev, parser);
     
-        if (token.type == ENUM(END) {
+        if (token.type == ENUM(END)) {
             fprintf(stderr, "ERROR: Expresssion isn't complete\n"); 
         }
         else {
