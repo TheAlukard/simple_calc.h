@@ -448,7 +448,7 @@ NUM_TYPE sc_calculate(const char *text, int len)
     if (text == NULL || len == 0) return 0;
 
     T(token_list) token_list = {0};
-    T(lexer) lexer = CAL(lexer_new, text, len < 0 ? strlen(text) : len);
+    T(lexer) lexer = CAL(lexer_new, text, len < 0 ? strlen(text) : (size_t)len);
 
     if (!CAL(tokenize, &lexer, &token_list)) {
         fprintf(stderr, "ERROR: Tokenization failed\n");
