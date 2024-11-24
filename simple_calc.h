@@ -397,11 +397,11 @@ FUN(NUM_TYPE, grouping, T(parser) *parser)
     T(parse_rule) rule = CAL(get_rule, token);
     NUM_TYPE num = CAL(expression, parser, (T(precedence))(rule.lbp));
 
+    if (parser->error) return 0;
+
     if (CAL(parser_consume, parser).type != ENUM(RPAREN)) {
-        if (parser->error) return 0;
-    
         token = CAL(parser_prev, parser);
-    
+
         if (token.type == ENUM(END)) {
             fprintf(stderr, "ERROR: Expresssion isn't complete\n"); 
         }
