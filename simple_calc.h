@@ -20,6 +20,13 @@ NUM_TYPE sc_calculate(const char *text, int len); // -1 for null terminated stri
 
 #ifdef SIMPLE_CALC_IMPLEMENTATION
 
+#ifndef SC_REALLOC
+    #define SC_REALLOC(ptr, sz) realloc(ptr, sz)
+#endif
+#ifndef SC_FREE
+    #define SC_FREE(ptr) free(ptr)
+#endif
+
 #define FUN(return_type, func_name, ...) return_type simple_calculator_##func_name(__VA_ARGS__)
 #define CAL(func_name, ...) simple_calculator_##func_name(__VA_ARGS__)
 #define ENUM(name) simple_calculator_enum_type_##name
@@ -37,7 +44,7 @@ NUM_TYPE sc_calculate(const char *text, int len); // -1 for null terminated stri
     do {\
         if ((list).count >= (list).capacity) {\
             (list).capacity = (list).capacity < 64 ? 64 : (list).capacity * 2;\
-            (list).items = realloc((list).items, sizeof(*(list).items) * (list).capacity);\
+            (list).items = SC_REALLOC((list).items, sizeof(*(list).items) * (list).capacity);\
         }\
         (list).items[(list).count] = item;\
         (list).count += 1;\
@@ -45,7 +52,7 @@ NUM_TYPE sc_calculate(const char *text, int len); // -1 for null terminated stri
 
 #define list_delete(list) \
     do {\
-        free((list).items);\
+        SC_FREE((list).items);\
         (list).items = NULL;\
         (list).count = 0;\
         (list).capacity = 0;\
