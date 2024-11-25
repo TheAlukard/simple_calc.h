@@ -486,6 +486,8 @@ NUM_TYPE sc_calculate(const char *text, int len)
     return result;
 }
 
+#undef SC_REALLOC
+#undef SC_FREE
 #undef FUN
 #undef CAL
 #undef ENUM
