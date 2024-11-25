@@ -297,7 +297,7 @@ FUN(NUM_TYPE, identifier, T(parser) *parser);
 
 static const T(parse_rule) T(rules)[ENUM(COUNT)] = {
     {T(num), NULL, ENUM(PREC_NONE)},
-    {NULL, T(binary), ENUM(PREC_ADDSUB)},
+    {T(unary), T(binary), ENUM(PREC_ADDSUB)},
     {T(unary), T(binary), ENUM(PREC_ADDSUB)},
     {NULL, T(binary), ENUM(PREC_MULDIV)},
     {NULL, T(binary), ENUM(PREC_MULDIV)},
@@ -386,9 +386,26 @@ FUN(NUM_TYPE, binary, T(parser) *parser)
 FUN(NUM_TYPE, unary, T(parser) *parser)
 {
     T(token) token = CAL(parser_prev, parser);
-    T(parse_rule) rule = CAL(get_rule, token);
+    NUM_TYPE result = 0;
 
-    return -CAL(expression, parser, (T(precedence))(rule.lbp));
+    switch (token.type) {
+        case ENUM(PLUS):
+            result = abs(CAL(expression, parser, ENUM(PREC_UNARY)));
+            break;
+        case ENUM(HYPHEN):
+            result = -CAL(expression, parser, ENUM(PREC_UNARY));
+            break;
+        case ENUM(END):
+            fprintf(stderr, "ERROR: Expression isn't complete\n");
+            parser->error = true;
+            break;
+        default:
+            fprintf(stderr, "Unkown unary operator '%.*s'", TOKEN_LEN(token), token.begin);
+            parser->error = true;
+            break;
+    }
+
+    return result;
 }
 
 FUN(NUM_TYPE, grouping, T(parser) *parser)
