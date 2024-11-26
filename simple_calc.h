@@ -397,7 +397,8 @@ FUN(NUM_TYPE, unary, T(parser) *parser)
 
     switch (token.type) {
         case ENUM(PLUS):
-            result = abs(CAL(expression, parser, ENUM(PREC_UNARY)));
+            result = CAL(expression, parser, ENUM(PREC_UNARY));
+            if (result < 0) result *= -1;
             break;
         case ENUM(HYPHEN):
             result = -CAL(expression, parser, ENUM(PREC_UNARY));
