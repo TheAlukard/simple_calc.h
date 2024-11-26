@@ -31,16 +31,15 @@ NUM_TYPE sc_calculate(const char *text, int len); // -1 for null terminated stri
 #define CAL(func_name, ...) simple_calculator_##func_name(__VA_ARGS__)
 #define ENUM(name) simple_calculator_enum_type_##name
 #define T(name) simple_calculator_##name
-#define UNUSED(item) (void)(item)
     
-#define list_define(name, type) \
+#define sc_list_define(name, type) \
     typedef struct {\
         T(type) *items;\
         size_t count;\
         size_t capacity;\
     } T(name)\
 
-#define list_append(list, item)\
+#define sc_list_append(list, item)\
     do {\
         if ((list).count >= (list).capacity) {\
             (list).capacity = (list).capacity < 64 ? 64 : (list).capacity * 2;\
@@ -50,7 +49,7 @@ NUM_TYPE sc_calculate(const char *text, int len); // -1 for null terminated stri
         (list).count += 1;\
     } while (0)
 
-#define list_delete(list) \
+#define sc_list_delete(list) \
     do {\
         SC_FREE((list).items);\
         (list).items = NULL;\
@@ -81,7 +80,7 @@ typedef struct {
 
 #define TOKEN_LEN(token) ((int)((token).end - (token).begin + 1))
 
-list_define(token_list, token);
+sc_list_define(token_list, token);
 
 typedef struct {
     const char *text;
@@ -98,14 +97,14 @@ FUN(T(lexer), lexer_new, const char *text, size_t len)
     };
 }
 
-#define is_alpha(c) (\
-    (c >= 'a' && c <= 'z') || \
-    (c >= 'A' && c <= 'Z') || \
-    (c == '_')\
+#define sc_is_alpha(c) (\
+    ((c) >= 'a' && (c) <= 'z') || \
+    ((c) >= 'A' && (c) <= 'Z') || \
+    ((c) == '_')\
 )
-#define is_num(c) (c >= '0' && c <= '9')
-#define is_alnum(c) (is_alpha(c) || is_num(c))
-#define is_space(c) (c == ' ' || c == '\r' || c == '\t' || c == '\n')
+#define sc_is_num(c) ((c) >= '0' && (c) <= '9')
+#define sc_is_alnum(c) (sc_is_alpha(c) || sc_is_num(c))
+#define sc_is_space(c) ((c) == ' ' || (c) == '\r' || (c) == '\t' || (c) == '\n')
 
 FUN(char, lexer_peek, T(lexer) *lexer)
 {
@@ -122,13 +121,13 @@ FUN(T(token), tokenize_num, T(lexer) *lexer)
     T(token) token = {0};
     token.begin = &lexer->text[lexer->current];
 
-    while (lexer->current < lexer->text_len && is_num((CAL(lexer_peek, lexer)))) {
+    while (lexer->current < lexer->text_len && sc_is_num((CAL(lexer_peek, lexer)))) {
         CAL(lexer_consume, lexer);
     }
 
     if (lexer->current < lexer->text_len && CAL(lexer_peek, lexer) == '.') {
         CAL(lexer_consume, lexer);
-        while (lexer->current < lexer->text_len && is_num((CAL(lexer_peek, lexer)))) {
+        while (lexer->current < lexer->text_len && sc_is_num((CAL(lexer_peek, lexer)))) {
             CAL(lexer_consume, lexer);
         }
     }
@@ -144,7 +143,7 @@ FUN(T(token), tokenize_symbol, T(lexer) *lexer)
     T(token) token = {0};
     token.begin = &lexer->text[lexer->current];
 
-    while (lexer->current < lexer->text_len && is_alnum(CAL(lexer_peek, lexer))) {
+    while (lexer->current < lexer->text_len && sc_is_alnum(CAL(lexer_peek, lexer))) {
         CAL(lexer_consume, lexer);
     }
 
@@ -203,7 +202,7 @@ FUN(T(token), tokenize_operator, T(lexer) *lexer)
 
 FUN(void, trim_left, T(lexer) *lexer)
 {
-    while (lexer->current < lexer->text_len && is_space(CAL(lexer_peek, lexer))) {
+    while (lexer->current < lexer->text_len && sc_is_space(CAL(lexer_peek, lexer))) {
         CAL(lexer_consume, lexer);
     }
 }
@@ -222,10 +221,10 @@ FUN(T(token), lexer_next, T(lexer) *lexer)
 
     char c = CAL(lexer_peek, lexer);
 
-    if (is_num(c)) {
+    if (sc_is_num(c)) {
         return CAL(tokenize_num, lexer);
     }
-    else if (is_alpha(c)) {
+    else if (sc_is_alpha(c)) {
         return CAL(tokenize_symbol, lexer);
     }
     else {
@@ -238,12 +237,12 @@ FUN(bool, tokenize, T(lexer) *lexer, T(token_list) *token_list)
     T(token) token = {0};
 
     while ((token = CAL(lexer_next, lexer)).type != ENUM(END)) {
-        list_append(*token_list, token);
+        sc_list_append(*token_list, token);
 
         if (token.type == ENUM(ERROR)) return false;
     }
 
-    list_append(*token_list, token);
+    sc_list_append(*token_list, token);
 
     return true;
 }
@@ -443,7 +442,7 @@ FUN(NUM_TYPE, grouping, T(parser) *parser)
 
 FUN(NUM_TYPE, identifier, T(parser) *parser)
 {
-    UNUSED(parser);
+    (void)(parser);
     return 0;
 }
 
@@ -477,12 +476,12 @@ NUM_TYPE sc_calculate(const char *text, int len)
 
     if (!CAL(tokenize, &lexer, &token_list)) {
         fprintf(stderr, "ERROR: Tokenization failed\n");
-        list_delete(token_list);
+        sc_list_delete(token_list);
         return 0;
     }
 
     NUM_TYPE result = CAL(parse, &token_list);
-    list_delete(token_list);
+    sc_list_delete(token_list);
 
     return result;
 }
@@ -493,14 +492,13 @@ NUM_TYPE sc_calculate(const char *text, int len)
 #undef CAL
 #undef ENUM
 #undef T
-#undef UNUSED
 #undef TOKEN_LEN
-#undef list_define
-#undef list_append
-#undef list_delete
-#undef is_alpha
-#undef is_num
-#undef is_alnum
-#undef is_space
+#undef sc_list_define
+#undef sc_list_append
+#undef sc_list_delete
+#undef sc_is_alpha
+#undef sc_is_num
+#undef sc_is_alnum
+#undef sc_is_space
 
 #endif // SIMPLE_CALC_IMPLEMENTATION
